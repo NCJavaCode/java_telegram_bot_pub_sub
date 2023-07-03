@@ -50,6 +50,7 @@ services:
             - BOT_NAME=${BOT_NAME}
             - BOT_TOKEN=${BOT_TOKEN}
             - BOT_URL=${BOT_URL}
+            - BOT_URL_SHORT=${BOT_URL_SHORT}
             - SCHEDULE_CRON_INTERVAL=${SCHEDULE_CRON_INTERVAL}
 
 

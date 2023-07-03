@@ -41,6 +41,9 @@ public class Bot extends TelegramLongPollingBot  {
     @Value("${bot.url}")
     private String botURL;
 
+    @Value("${bot.url.short}")
+    private String botURLShort;
+
     @Override
     public void onUpdateReceived(Update update) {
 
@@ -154,7 +157,7 @@ public class Bot extends TelegramLongPollingBot  {
                 message.setChatId(chatID); //Write chatID manually here
 
                 for (String s:differences) {
-                    message.setText("https://metr.ua"+s);
+                    message.setText(botURLShort+s);
                     execute(message);
                 }
                 articleService.saveUserArticles(chatID, differences);
