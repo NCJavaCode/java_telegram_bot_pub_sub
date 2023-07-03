@@ -1,0 +1,58 @@
+version: '3.7'
+services:
+    mysql:
+        container_name: telegram_bot_DB
+        image: mysql:5.7
+        restart: always
+        environment:
+            TZ: Europe/Kiev
+            MYSQL_DATABASE: telegram_bot_db
+            MYSQL_USER: telegram_bot_user
+            MYSQL_PASSWORD: telegram_bot_password
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - mysql-data:/var/lib/mysql
+        ports:
+            - "3306:3306"
+        command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin:latest
+        restart: always
+        environment:
+            PMA_HOST: mysql
+            PMA_USER: root
+            PMA_PASSWORD: root
+        ports:
+            - "8082:80"
+
+    java:
+        container_name: telegram_bot
+        image: stanislavmaru/bot:latest
+        build:
+            context:   ./
+            dockerfile: ./Dockerfile
+        depends_on:
+            - mysql
+        stdin_open: true
+        tty: true
+        ports:
+            - "8080:8080"
+        command:  >
+            bash -c "./mvnw clean install -DskipTests
+            && ./mvnw spring-boot:run
+            "
+        environment:
+            - JVM_OPTS=-Xmx12g -Xms12g -XX:MaxPermSize=1024m
+            - DATABASE_URL=${DATABASE_URL}
+            - DATABASE_USER=${DATABASE_USER}
+            - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+            - BOT_NAME=${BOT_NAME}
+            - BOT_TOKEN=${BOT_TOKEN}
+            - BOT_URL=${BOT_URL}
+            - SCHEDULE_CRON_INTERVAL=${SCHEDULE_CRON_INTERVAL}
+
+
+volumes:
+    composer-cache:
+    mysql-data:
