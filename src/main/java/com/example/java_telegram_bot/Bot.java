@@ -2,6 +2,7 @@ package com.example.java_telegram_bot;
 
 import com.example.java_telegram_bot.entity.Article;
 import com.example.java_telegram_bot.entity.TelegramUser;
+import com.example.java_telegram_bot.factory.TelegramUserFactory;
 import com.example.java_telegram_bot.helper.SSLHelper;
 import com.example.java_telegram_bot.service.ArticleService;
 import com.example.java_telegram_bot.service.UserService;
@@ -25,6 +26,9 @@ import java.util.stream.Collectors;
 @Component
 @EnableScheduling
 public class Bot extends TelegramLongPollingBot  {
+
+    @Autowired
+    TelegramUserFactory telegramUserFactory;
 
     @Autowired
     UserService userService;
@@ -75,17 +79,13 @@ public class Bot extends TelegramLongPollingBot  {
                        userService.updateStartConditional(userID, true);
                        log.info("User exist!");
                    } else {
-                       String firstName = update.getMessage().getFrom().getFirstName() == null?"firstNameNotSet":update.getMessage().getFrom().getFirstName();
-                       String lastName = update.getMessage().getFrom().getLastName() == null?"lastNameNotSet":update.getMessage().getFrom().getLastName();
-                       String userName = update.getMessage().getFrom().getUserName() == null?"userNameNotSet":update.getMessage().getFrom().getUserName();
-
-                       TelegramUser telegramUser = new TelegramUser();
-                       telegramUser.setUserName(userName);
-                       telegramUser.setFirstName(firstName);
-                       telegramUser.setLastName(lastName);
-                       telegramUser.setTelegramUserID(userID);
-                       telegramUser.setStart(true);
-                       userService.createUser(telegramUser);
+                       try {
+                           userService.createUser(telegramUserFactory.createInstance(update));
+                       } catch (Exception e) {
+                           RuntimeException exception = new RuntimeException(e);
+                           log.error(e.getMessage());
+                           throw exception;
+                       }
                    }
                    break;
 
