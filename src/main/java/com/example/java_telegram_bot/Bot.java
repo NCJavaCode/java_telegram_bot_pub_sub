@@ -63,7 +63,7 @@ public class Bot extends TelegramLongPollingBot  {
             }
         }
 
-       if (update.getMessage().hasText()) {
+       if (update.getMessage() != null && update.getMessage().hasText()) {
 
            long chatId = update.getMessage().getChatId();
            Long userID = update.getMessage().getFrom().getId();
