@@ -79,13 +79,7 @@ public class Bot extends TelegramLongPollingBot  {
                        userService.updateStartConditional(userID, true);
                        log.info("User exist!");
                    } else {
-                       try {
-                           userService.createUser(telegramUserFactory.createInstance(update));
-                       } catch (Exception e) {
-                           RuntimeException exception = new RuntimeException(e);
-                           log.error(e.getMessage());
-                           throw exception;
-                       }
+                       userService.createUser(telegramUserFactory.createInstance(update));
                    }
                    break;
 

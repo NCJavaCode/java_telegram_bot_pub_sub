@@ -7,7 +7,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 public class TelegramUserFactory {
-    public TelegramUser createInstance(Update update) throws Exception {
+    public TelegramUser createInstance(Update update) {
 
         Message message = update.getMessage();
 

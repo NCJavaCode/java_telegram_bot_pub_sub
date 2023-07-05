@@ -2,6 +2,7 @@ package com.example.java_telegram_bot.service.impl;
 
 import com.example.java_telegram_bot.entity.Article;
 import com.example.java_telegram_bot.entity.TelegramUser;
+import com.example.java_telegram_bot.factory.ArticleFactory;
 import com.example.java_telegram_bot.repository.ArticleRepository;
 import com.example.java_telegram_bot.repository.TelegramUserRepository;
 import com.example.java_telegram_bot.service.ArticleService;
@@ -20,19 +21,14 @@ public class ArticleServiceImpl implements ArticleService{
     @Autowired
     TelegramUserRepository telegramUserRepository;
 
+    @Autowired
+    ArticleFactory articleFactory;
+
     @Override
     public void saveUserArticles(Long userID, List<String> listArticles){
-        Article article;
         TelegramUser telegramUser = telegramUserRepository.findByTelegramUserID(userID);
         for (String s:listArticles) {
-
-            article = new Article();
-            article.setTelegramUser(telegramUser);
-            article.setLinkID(Integer.parseInt(s.substring(4)));
-            article.setShortLink(s);
-            article.setLink("https://metr.ua/"+s);
-
-            articleRepository.save(article);
+           articleRepository.save(articleFactory.createInstance(telegramUser, s));
         }
     }
 
