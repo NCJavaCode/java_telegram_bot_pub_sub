@@ -1,13 +1,16 @@
 package com.example.java_telegram_bot.entity;
 
+import com.example.java_telegram_bot.publisher_subscriber.Subscriber;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Entity
+@Slf4j
 @Data
 @NoArgsConstructor
 @Table(name = "telegram_user")
-public class TelegramUser {
+public class TelegramUser implements Subscriber {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -29,4 +32,9 @@ public class TelegramUser {
 
     @Column(name = "is_start", nullable = false)
     private boolean isStart;
+
+    @Override
+    public void update(String event) {
+        log.info(event);
+    }
 }

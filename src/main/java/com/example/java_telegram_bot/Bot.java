@@ -4,6 +4,7 @@ import com.example.java_telegram_bot.entity.Article;
 import com.example.java_telegram_bot.entity.TelegramUser;
 import com.example.java_telegram_bot.factory.TelegramUserFactory;
 import com.example.java_telegram_bot.helper.SSLHelper;
+import com.example.java_telegram_bot.publisher_subscriber.SitePublisher;
 import com.example.java_telegram_bot.service.ArticleService;
 import com.example.java_telegram_bot.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
 @Component
 @EnableScheduling
 public class Bot extends TelegramLongPollingBot  {
+
+    @Autowired
+    SitePublisher sitePublisher;
 
     @Autowired
     TelegramUserFactory telegramUserFactory;
@@ -53,11 +57,14 @@ public class Bot extends TelegramLongPollingBot  {
 
         //if the participant joined or left the chat
         if (update.hasMyChatMember()) {
+            TelegramUser user = userService.getUser(update.getMyChatMember().getChat().getId());
             //delete chat data from the database if the user left the chat with the bot
             if (update.getMyChatMember().getNewChatMember().getStatus().equals("kicked")) {
-                TelegramUser user = userService.getUser(update.getMyChatMember().getChat().getId());
-                articleService.deleteAllArticles(user);
-                userService.dropUserFromChat(update.getMyChatMember().getChat().getId());
+//                articleService.deleteAllArticles(user);
+//                userService.dropUserFromChat(update.getMyChatMember().getChat().getId());
+                log.info("User left the chat");
+                sitePublisher.removeObserver(user);
+
             } else {
                 log.info("User join to chat");
             }
@@ -65,27 +72,32 @@ public class Bot extends TelegramLongPollingBot  {
 
        if (update.getMessage() != null && update.getMessage().hasText()) {
 
-           long chatId = update.getMessage().getChatId();
-           Long userID = update.getMessage().getFrom().getId();
+//           long chatId = update.getMessage().getChatId();
+//           Long userID = update.getMessage().getFrom().getId();
 
            String messageText = update.getMessage().getText();
 
            switch (messageText) {
                case "/start":
-                   if (userService.ifStart(userID)) {
-                       sendMessage(chatId, "You already started chat! Enjoy:)");
-                   }
-                   if (userService.ifUserExists(chatId)) {
-                       userService.updateStartConditional(userID, true);
-                       log.info("User exist!");
-                   } else {
-                       userService.createUser(telegramUserFactory.createInstance(update));
+//                   if (userService.ifStart(userID)) {
+//                       sendMessage(chatId, "You already started chat! Enjoy:)");
+//                   }
+//                   if (userService.ifUserExists(chatId)) {
+//                       userService.updateStartConditional(userID, true);
+//                       log.info("User exist!");
+//                   } else
+                   {
+                       TelegramUser user = telegramUserFactory.createInstance(update);
+//                       userService.createUser(user);
+                       sitePublisher.addObserver(user);
                    }
                    break;
 
                case "/stop":
-                   userService.updateStartConditional(userID, false);
-                   sendMessage(chatId, "Your distribution is paused...");
+                   TelegramUser user = telegramUserFactory.createInstance(update);
+                   sitePublisher.removeObserver(user);
+//                   userService.updateStartConditional(userID, false);
+//                   sendMessage(chatId, "Your distribution is paused...");
                    break;
 
                default:
@@ -94,11 +106,11 @@ public class Bot extends TelegramLongPollingBot  {
        }
     }
 
-    @Scheduled(cron = "${schedule.cron.interval}")
-    public void sendMessage() {
-        log.info("Looping...");
-        sendLinks();
-    }
+//    @Scheduled(cron = "${schedule.cron.interval}")
+//    public void sendMessage() {
+//        log.info("Looping...");
+//        sendLinks();
+//    }
 
     @Override
     public void onClosing() {
@@ -122,6 +134,8 @@ public class Bot extends TelegramLongPollingBot  {
 
     @Override
     public void onRegister() {
+        log.info("Bot registered!");
+        sitePublisher.setBot(this);
         super.onRegister();
     }
 
@@ -140,7 +154,9 @@ public class Bot extends TelegramLongPollingBot  {
                 links = links.size()<4?links.subList(0,links.size()):links.subList(0,3);
 
                 List<Article> used_links = articleService.findArticlesByTelegramUserID(chatID);
-                List<String> listUsedLinks = used_links.stream().map(Article::getShortLink).collect(Collectors.toList());
+                List<String> listUsedLinks = used_links.stream()
+                        .map(Article::getShortLink)
+                        .collect(Collectors.toList());
 
                 List<String> differences = links.stream()
                         .filter(element -> !listUsedLinks.contains(element))
