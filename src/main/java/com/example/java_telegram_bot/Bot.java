@@ -1,27 +1,20 @@
 package com.example.java_telegram_bot;
 
-import com.example.java_telegram_bot.entity.Article;
 import com.example.java_telegram_bot.entity.TelegramUser;
 import com.example.java_telegram_bot.factory.TelegramUserFactory;
-import com.example.java_telegram_bot.helper.SSLHelper;
 import com.example.java_telegram_bot.publisher_subscriber.SitePublisher;
-import com.example.java_telegram_bot.service.ArticleService;
 import com.example.java_telegram_bot.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -36,9 +29,6 @@ public class Bot extends TelegramLongPollingBot  {
 
     @Autowired
     UserService userService;
-
-    @Autowired
-    ArticleService articleService;
 
     @Value("${bot.name}")
     private String botUsername;
@@ -60,11 +50,8 @@ public class Bot extends TelegramLongPollingBot  {
             TelegramUser user = userService.getUser(update.getMyChatMember().getChat().getId());
             //delete chat data from the database if the user left the chat with the bot
             if (update.getMyChatMember().getNewChatMember().getStatus().equals("kicked")) {
-//                articleService.deleteAllArticles(user);
-//                userService.dropUserFromChat(update.getMyChatMember().getChat().getId());
                 log.info("User left the chat");
                 sitePublisher.removeObserver(user);
-
             } else {
                 log.info("User join to chat");
             }
@@ -72,23 +59,12 @@ public class Bot extends TelegramLongPollingBot  {
 
        if (update.getMessage() != null && update.getMessage().hasText()) {
 
-//           long chatId = update.getMessage().getChatId();
-//           Long userID = update.getMessage().getFrom().getId();
-
            String messageText = update.getMessage().getText();
 
            switch (messageText) {
                case "/start":
-//                   if (userService.ifStart(userID)) {
-//                       sendMessage(chatId, "You already started chat! Enjoy:)");
-//                   }
-//                   if (userService.ifUserExists(chatId)) {
-//                       userService.updateStartConditional(userID, true);
-//                       log.info("User exist!");
-//                   } else
                    {
                        TelegramUser user = telegramUserFactory.createInstance(update);
-//                       userService.createUser(user);
                        sitePublisher.addObserver(user);
                    }
                    break;
@@ -96,8 +72,6 @@ public class Bot extends TelegramLongPollingBot  {
                case "/stop":
                    TelegramUser user = telegramUserFactory.createInstance(update);
                    sitePublisher.removeObserver(user);
-//                   userService.updateStartConditional(userID, false);
-//                   sendMessage(chatId, "Your distribution is paused...");
                    break;
 
                default:
@@ -105,12 +79,6 @@ public class Bot extends TelegramLongPollingBot  {
            }
        }
     }
-
-//    @Scheduled(cron = "${schedule.cron.interval}")
-//    public void sendMessage() {
-//        log.info("Looping...");
-//        sendLinks();
-//    }
 
     @Override
     public void onClosing() {
@@ -139,49 +107,49 @@ public class Bot extends TelegramLongPollingBot  {
         super.onRegister();
     }
 
-    private void sendLinks() {
-        try {
-            Document doc = SSLHelper.getConnection(botURL).get();
-            List<TelegramUser> telegramUsers = userService.getAllUsers();
-
-            for (TelegramUser telegramUser:telegramUsers) {
-                Long chatID = telegramUser.getTelegramUserID();
-
-                //exclude the user from sending messages if he stopped it using the /stop command
-               if(!telegramUser.isStart()) continue;
-
-                List<String> links = doc.select("div.ad a.btn-details").eachAttr("href");
-                links = links.size()<4?links.subList(0,links.size()):links.subList(0,3);
-
-                List<Article> used_links = articleService.findArticlesByTelegramUserID(chatID);
-                List<String> listUsedLinks = used_links.stream()
-                        .map(Article::getShortLink)
-                        .collect(Collectors.toList());
-
-                List<String> differences = links.stream()
-                        .filter(element -> !listUsedLinks.contains(element))
-                        .collect(Collectors.toList());
-
-                SendMessage message = new SendMessage();
-                message.enableMarkdown(true);
-                message.setChatId(chatID); //Write chatID manually here
-
-                for (String s:differences) {
-                    message.setText(botURLShort+s);
-                    execute(message);
-                }
-                articleService.saveUserArticles(chatID, differences);
-            }
-        }
-            catch (TelegramApiException e) {
-                e.printStackTrace();
-                log.error(e.getMessage());
-                log.error("Bot died!");
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+//    private void sendLinks() {
+//        try {
+//            Document doc = SSLHelper.getConnection(botURL).get();
+//            List<TelegramUser> telegramUsers = userService.getAllUsers();
+//
+//            for (TelegramUser telegramUser:telegramUsers) {
+//                Long chatID = telegramUser.getTelegramUserID();
+//
+//                //exclude the user from sending messages if he stopped it using the /stop command
+//               if(!telegramUser.isStart()) continue;
+//
+//                List<String> links = doc.select("div.ad a.btn-details").eachAttr("href");
+//                links = links.size()<4?links.subList(0,links.size()):links.subList(0,3);
+//
+//                List<Article> used_links = articleService.findArticlesByTelegramUserID(chatID);
+//                List<String> listUsedLinks = used_links.stream()
+//                        .map(Article::getShortLink)
+//                        .collect(Collectors.toList());
+//
+//                List<String> differences = links.stream()
+//                        .filter(element -> !listUsedLinks.contains(element))
+//                        .collect(Collectors.toList());
+//
+//                SendMessage message = new SendMessage();
+//                message.enableMarkdown(true);
+//                message.setChatId(chatID); //Write chatID manually here
+//
+//                for (String s:differences) {
+//                    message.setText(botURLShort+s);
+//                    execute(message);
+//                }
+//                articleService.saveUserArticles(chatID, differences);
+//            }
+//        }
+//            catch (TelegramApiException e) {
+//                e.printStackTrace();
+//                log.error(e.getMessage());
+//                log.error("Bot died!");
+//            }
+//            catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
 
     public void sendMessage(Long chatId, String textMessage) {
         SendMessage message = new SendMessage();
