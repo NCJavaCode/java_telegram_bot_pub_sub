@@ -69,21 +69,21 @@ public class SitePublisher {
     public void updateSiteArticles() throws IOException {
         Document doc = SSLHelper.getConnection(botURL).get();
 
-        List<SiteArticle> siteArticles;
-
-        List<SiteArticle> usedSiteArticlelinks = siteArticleService.getAllSiteArticle();
-
+        //get all saved links from DB
+        List<SiteArticle> usedSiteArticleLinks = siteArticleService.getAllSiteArticle();
+        //get last links from site
         List<String> links = doc.select("div.ad a.btn-details").eachAttr("href");
-
-        List<String> listUsedLinks = usedSiteArticlelinks.stream()
+        //get all short links from DB
+        List<String> listUsedLinks = usedSiteArticleLinks.stream()
                 .map(SiteArticle::getShortLink)
                 .collect(Collectors.toList());
-
+        //get records that are not in the database, but are on the site
         List<String> differences = links.stream()
                 .filter(element -> !listUsedLinks.contains(element))
                 .collect(Collectors.toList());
 
-        siteArticles =
+        //based on the difference between records in the DB and on the site, create instances of SiteArticle to add to the DB
+        List<SiteArticle> siteArticles =
                 differences.stream()
                 .map((short_link) -> {SiteArticle article = new SiteArticle();
                             article.setShortLink(short_link);

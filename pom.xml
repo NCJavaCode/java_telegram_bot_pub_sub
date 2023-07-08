@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>java_telegram_bot</artifactId>
+    <artifactId>java_telegram_bot_pub_sub</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>java_telegram_bot</name>
-    <description>java_telegram_bot</description>
+    <name>java_telegram_bot_pub_sub</name>
+    <description>java_telegram_bot_pub_sub</description>
     <properties>
         <java.version>17</java.version>
     </properties>
