@@ -80,6 +80,17 @@ public class Bot extends TelegramLongPollingBot  {
        }
     }
 
+    public void sendMessage(Long chatId, String textMessage) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(textMessage);
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void onClosing() {
         super.onClosing();
@@ -105,60 +116,5 @@ public class Bot extends TelegramLongPollingBot  {
         log.info("Bot registered!");
         sitePublisher.setBot(this);
         super.onRegister();
-    }
-
-//    private void sendLinks() {
-//        try {
-//            Document doc = SSLHelper.getConnection(botURL).get();
-//            List<TelegramUser> telegramUsers = userService.getAllUsers();
-//
-//            for (TelegramUser telegramUser:telegramUsers) {
-//                Long chatID = telegramUser.getTelegramUserID();
-//
-//                //exclude the user from sending messages if he stopped it using the /stop command
-//               if(!telegramUser.isStart()) continue;
-//
-//                List<String> links = doc.select("div.ad a.btn-details").eachAttr("href");
-//                links = links.size()<4?links.subList(0,links.size()):links.subList(0,3);
-//
-//                List<Article> used_links = articleService.findArticlesByTelegramUserID(chatID);
-//                List<String> listUsedLinks = used_links.stream()
-//                        .map(Article::getShortLink)
-//                        .collect(Collectors.toList());
-//
-//                List<String> differences = links.stream()
-//                        .filter(element -> !listUsedLinks.contains(element))
-//                        .collect(Collectors.toList());
-//
-//                SendMessage message = new SendMessage();
-//                message.enableMarkdown(true);
-//                message.setChatId(chatID); //Write chatID manually here
-//
-//                for (String s:differences) {
-//                    message.setText(botURLShort+s);
-//                    execute(message);
-//                }
-//                articleService.saveUserArticles(chatID, differences);
-//            }
-//        }
-//            catch (TelegramApiException e) {
-//                e.printStackTrace();
-//                log.error(e.getMessage());
-//                log.error("Bot died!");
-//            }
-//            catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-
-    public void sendMessage(Long chatId, String textMessage) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText(textMessage);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
     }
 }
